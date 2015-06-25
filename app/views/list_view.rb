@@ -1,14 +1,15 @@
 class ListView < UIView
 
-  attr_accessor :text_area, :task_list, :add_task_button, :tasks
-  @text_area = @text_field_view
+  attr_accessor :text_area, :task_list, :add_task_button, :completed_tasks, :uncompleted_tasks
+
   #@tasks = []
-  self.completed_tasks = Task.find(:completed, NSFEqualTo, 1).sort {|a, b| b.created_at <=> a.created_at }
-  self.uncompleted_tasks = Task.find(:completed, NSFEqualTo, 0).sort {|a, b| b.created_at <=> a.created_at }
+
 
   def initWithFrame frame
     super
-    self.tasks = Task.all.sort {|a,b| b.created_at <=> a.created_at}
+    self.completed_tasks = Task.find(:completed, NSFEqualTo, 1).sort {|a, b| b.created_at <=> a.created_at }
+    self.uncompleted_tasks = Task.find(:completed, NSFEqualTo, 0).sort {|a, b| b.created_at <=> a.created_at }
+    #self.tasks = Task.all.sort {|a,b| b.created_at <=> a.created_at}
     add_text_area
     add_task_list
   end
@@ -23,6 +24,7 @@ class ListView < UIView
 
     text_field_view.placeholder = "new task"
     text_field_view.textAlignment = NSTextAlignmentLeft
+    self.text_area = text_field_view
     self.addSubview(text_field_view)
 
     #add button
@@ -33,13 +35,15 @@ class ListView < UIView
     add_task_button.addTarget(self,
                               action: :add_task,
                               forControlEvents: UIControlEventTouchUpInside)
+    self.add_task_button = add_task_button
     self.addSubview add_task_button
   end
 
   def add_task
     NSLog("Task Added")
+    return if self.text_area.text.nil? or self.text_area.text.empty?
     task = Task.create(:name => self.text_area.text, :created_at => Time.now)
-    self.tasks.unshift(task)
+    self.uncompleted_tasks.unshift(task)
 
     #self.tasks << self.text_area.text
     self.task_list.reloadData
@@ -51,7 +55,26 @@ class ListView < UIView
     table_view.dataSource = self
     table_view.delegate = self
     table_view.clipsToBounds = false
+    self.task_list = table_view
     self.addSubview table_view
+  end
+
+  def reload_table_sections
+    self.completed_tasks = Task.find(:completed, NSFEqualTo, 1).sort { |a, b| b.created_at <=> a.created_at }
+    self.uncompleted_tasks = Task.find(:completed, NSFEqualTo, 0).sort { |a, b| b.created_at <=> a.created_at }
+    self.task_list.reloadData
+  end
+
+  def numberOfSectionsInTableView(tableView)
+    2
+  end
+
+  def tableView(tableView, titleForHeaderInSection: section)
+    if section == 1
+      "completed"
+    elsif section == 0
+      "pending"
+    end
   end
 
   def tableView(tableView, cellForRowAtIndexPath: indexPath)
@@ -66,14 +89,6 @@ class ListView < UIView
     end
 
     cell
-  end
-
-  def tableView(tableView, titleForHeaderInSection: section)
-    if section == 1
-      "completed"
-    elsif section == 0
-      "pending"
-    end
   end
 
   def tableView(tableView, numberOfRowsInSection: section)
