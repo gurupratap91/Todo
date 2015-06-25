@@ -1,10 +1,14 @@
 class ListView < UIView
 
-  attr_accessor :text_area, :task_list, :add_task_button
-  self.text_area = self.text_field_view
+  attr_accessor :text_area, :task_list, :add_task_button, :tasks
+  @text_area = @text_field_view
+  #@tasks = []
+  self.completed_tasks = Task.find(:completed, NSFEqualTo, 1).sort {|a, b| b.created_at <=> a.created_at }
+  self.uncompleted_tasks = Task.find(:completed, NSFEqualTo, 0).sort {|a, b| b.created_at <=> a.created_at }
 
   def initWithFrame frame
     super
+    self.tasks = Task.all.sort {|a,b| b.created_at <=> a.created_at}
     add_text_area
     add_task_list
   end
@@ -34,8 +38,12 @@ class ListView < UIView
 
   def add_task
     NSLog("Task Added")
-    self.tasks << self.text_area.text
+    task = Task.create(:name => self.text_area.text, :created_at => Time.now)
+    self.tasks.unshift(task)
+
+    #self.tasks << self.text_area.text
     self.task_list.reloadData
+    self.text_area.text = ""
   end
 
   def add_task_list
@@ -50,11 +58,45 @@ class ListView < UIView
     @reuseIdentifier ||= "cell"
     cell = tableView.dequeueReusableCellWithIdentifier(@reuseIdentifier)
     cell ||= UITableViewCell.alloc.initWithStyle(UITableViewCellStyleDefault, reuseIdentifier: @reuseIdentifier)
-    cell.textLabel.text = "#{self.tasks[indexPath.row]}"
+
+    if indexPath.section == 0
+      cell.textLabel.text = "#{self.uncompleted_tasks[indexPath.row].name}"
+    elsif indexPath.section == 1
+      cell.textLabel.text = "#{self.completed_tasks[indexPath.row].name}"
+    end
+
     cell
   end
 
+  def tableView(tableView, titleForHeaderInSection: section)
+    if section == 1
+      "completed"
+    elsif section == 0
+      "pending"
+    end
+  end
+
   def tableView(tableView, numberOfRowsInSection: section)
-    10
+    if section == 0
+      Task.find(:completed, NSFEqualTo, 0).count
+      self.uncompleted_tasks.count
+    elsif section == 1
+      Task.find(:completed, NSFEqualTo, 1).count
+    else
+      0
+    end
+  end
+
+  def tableView(tableView, didSelectRowAtIndexPath: indexPath)
+    tableView.deselectRowAtIndexPath(indexPath, animated: true)
+    cell = tableView.cellForRowAtIndexPath(indexPath)
+    self.mark_as_done(cell)
+  end
+
+  def mark_as_done cell
+    task = Task.find(:name, NSFEqualTo, cell.textLabel.text).first
+    task.completed = !task.completed
+    task.save
+    self.reload_table_sections
   end
 end
