@@ -53,7 +53,7 @@ class ListView < UIView
     table_view = UITableView.alloc.initWithFrame([[0, 70], [self.bounds.size.width, self.bounds.size.height - 70]], style: UITableViewStyleGrouped)
     table_view.dataSource = self
     table_view.delegate = self
-    table_view.clipsToBounds = false
+    table_view.clipsToBounds = true
     self.task_list = table_view
     self.addSubview table_view
   end
@@ -79,12 +79,14 @@ class ListView < UIView
   def tableView(tableView, cellForRowAtIndexPath: indexPath)
     @reuseIdentifier ||= "cell"
     cell = tableView.dequeueReusableCellWithIdentifier(@reuseIdentifier)
-    cell ||= UITableViewCell.alloc.initWithStyle(UITableViewCellStyleDefault, reuseIdentifier: @reuseIdentifier)
+    cell ||= UITableViewCell.alloc.initWithStyle(UITableViewCellStyleSubtitle, reuseIdentifier: @reuseIdentifier)
 
     if indexPath.section == 0
       cell.textLabel.text = "#{self.uncompleted_tasks[indexPath.row].name}"
+      cell.detailTextLabel.text = "#{self.uncompleted_tasks[indexPath.row].created_at}"
     elsif indexPath.section == 1
       cell.textLabel.text = "#{self.completed_tasks[indexPath.row].name}"
+      cell.detailTextLabel.text = "#{self.completed_tasks[indexPath.row].created_at}"
     end
 
     cell
@@ -109,7 +111,14 @@ class ListView < UIView
   end
 
   def mark_as_done cell
-    task = Task.find(:name, NSFEqualTo, cell.textLabel.text).first
+    tasks = Task.find(:name, NSFEqualTo, cell.textLabel.text)
+    task = Task.new
+    tasks.each do |t|
+      if t.created_at.to_s == cell.detailTextLabel.text
+        task = t
+      end
+    end
+    NSLog "I worked for #{task.name}"
     task.completed = !task.completed
     task.save
     self.reload_table_sections
