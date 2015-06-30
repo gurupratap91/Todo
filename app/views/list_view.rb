@@ -9,7 +9,6 @@ class ListView < UIView
     super
     self.completed_tasks = Task.find(:completed, NSFEqualTo, 1).sort {|a, b| b.created_at <=> a.created_at }
     self.uncompleted_tasks = Task.find(:completed, NSFEqualTo, 0).sort {|a, b| b.created_at <=> a.created_at }
-    #self.tasks = Task.all.sort {|a,b| b.created_at <=> a.created_at}
     add_text_area
     add_task_list
   end
@@ -40,9 +39,9 @@ class ListView < UIView
   end
 
   def add_task
-    NSLog("Task Added")
+    NSLog("Task Added #{self.text_area.text}")
     return if self.text_area.text.nil? or self.text_area.text.empty?
-    task = Task.create(:name => self.text_area.text, :created_at => Time.now)
+    task = Task.create(:name => self.text_area.text, :created_at => Time.now, :completed => false)
     self.uncompleted_tasks.unshift(task)
 
     #self.tasks << self.text_area.text
@@ -51,7 +50,7 @@ class ListView < UIView
   end
 
   def add_task_list
-    table_view = UITableView.alloc.initWithFrame(CGRectMake(0,70,self.frame.size.width, 200))
+    table_view = UITableView.alloc.initWithFrame([[0, 70], [self.bounds.size.width, self.bounds.size.height - 70]], style: UITableViewStyleGrouped)
     table_view.dataSource = self
     table_view.delegate = self
     table_view.clipsToBounds = false
@@ -106,6 +105,7 @@ class ListView < UIView
     tableView.deselectRowAtIndexPath(indexPath, animated: true)
     cell = tableView.cellForRowAtIndexPath(indexPath)
     self.mark_as_done(cell)
+
   end
 
   def mark_as_done cell

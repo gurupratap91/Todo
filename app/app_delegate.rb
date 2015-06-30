@@ -6,6 +6,7 @@ class AppDelegate
     #@navigationController = UINavigationController.alloc.initWithRootViewController(@list_controller)
 
     documents_path         = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)[0]
+    puts documents_path
     NanoStore.shared_store = NanoStore.store(:file, documents_path + "/nano.db")
 
     @window = UIWindow.alloc.initWithFrame(UIScreen.mainScreen.bounds)
