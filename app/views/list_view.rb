@@ -83,15 +83,21 @@ class ListView < UIView
 
     if indexPath.section == 0
       cell.textLabel.text = "#{self.uncompleted_tasks[indexPath.row].name}"
-      cell.detailTextLabel.text = "#{self.uncompleted_tasks[indexPath.row].created_at}"
+      #puts format_time self.uncompleted_tasks[indexPath.row].created_at
+      cell.detailTextLabel.text = format_time self.uncompleted_tasks[indexPath.row].created_at #"#{self.uncompleted_tasks[indexPath.row].created_at}"
     elsif indexPath.section == 1
       cell.textLabel.text = "#{self.completed_tasks[indexPath.row].name}"
-      cell.detailTextLabel.text = "#{self.completed_tasks[indexPath.row].created_at}"
+      #puts format_time self.completed_tasks[indexPath.row].created_at
+      cell.detailTextLabel.text = format_time self.completed_tasks[indexPath.row].created_at#"#{self.completed_tasks[indexPath.row].created_at}"
     end
 
     cell
   end
 
+  def format_time time
+    timestamp = time.strftime("Created on %m/%d/%Y") + time.strftime(" at %I:%M:%S%p")
+    timestamp
+  end
   def tableView(tableView, numberOfRowsInSection: section)
     if section == 0
       Task.find(:completed, NSFEqualTo, 0).count
@@ -114,11 +120,12 @@ class ListView < UIView
     tasks = Task.find(:name, NSFEqualTo, cell.textLabel.text)
     task = Task.new
     tasks.each do |t|
-      if t.created_at.to_s == cell.detailTextLabel.text
+      timestamp = format_time t.created_at
+      if timestamp == cell.detailTextLabel.text
         task = t
       end
     end
-    NSLog "I worked for #{task.name}"
+    #NSLog "I worked for #{task.name}"
     task.completed = !task.completed
     task.save
     self.reload_table_sections
