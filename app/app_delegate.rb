@@ -7,7 +7,7 @@ class AppDelegate
 
     documents_path         = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)[0]
     puts documents_path
-    NanoStore.shared_store = NanoStore.store(:file, documents_path + "/nano.db")
+    NanoStore.shared_store = NanoStore.store(:file, documents_path + "/nano1.db")
 
     @window = UIWindow.alloc.initWithFrame(UIScreen.mainScreen.bounds)
     @window.makeKeyAndVisible

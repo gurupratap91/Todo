@@ -112,18 +112,24 @@ class ListView < UIView
   def tableView(tableView, didSelectRowAtIndexPath: indexPath)
     tableView.deselectRowAtIndexPath(indexPath, animated: true)
     cell = tableView.cellForRowAtIndexPath(indexPath)
-    self.mark_as_done(cell)
+    self.mark_as_done(cell, indexPath)
 
   end
 
-  def mark_as_done cell
+  def mark_as_done cell, indexPath
     tasks = Task.find(:name, NSFEqualTo, cell.textLabel.text)
     task = Task.new
+
+    if indexPath.section == 0
+      timestamp = self.uncompleted_tasks[indexPath.row].created_at
+    else
+      timestamp = self.completed_tasks[indexPath.row].created_at
+    end
+    
     tasks.each do |t|
-      timestamp = format_time t.created_at
-      if timestamp == cell.detailTextLabel.text
-        task = t
-      end
+      #timestamp = format_time t.created_at
+      #puts "It is in section #{indexPath.section}"
+          task = t if t.created_at == timestamp
     end
     #NSLog "I worked for #{task.name}"
     task.completed = !task.completed
